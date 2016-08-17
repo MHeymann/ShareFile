@@ -18,7 +18,6 @@ public class SenderDeconstructor implements Runnable {
 	private SocketChannel socketChannel = null;
 	private DatagramChannel datagramChannel = null;
 	private InetSocketAddress address = null;
-	private Selector selector = null;
 	private HashMap<Integer, Packet> hMap = null;
 
 	public SenderDeconstructor(String fileLocation, int fileSize, String IP_Address, int port, Sender sender) 
@@ -30,7 +29,6 @@ public class SenderDeconstructor implements Runnable {
 		this.port = port;
 		this.socketChannel = null;
 		this.datagramChannel = null;
-		this.selector = null;
 		this.hMap = null;;
 	}
 
@@ -80,36 +78,22 @@ public class SenderDeconstructor implements Runnable {
 		
 		try {
 			fin.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.out.printf("Done sending file\n");
-		try {
-			this.selector.select();
+			this.socketChannel.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.printf("done\n");
+		System.out.printf("Done sending file\n");
 	}
 
 	public boolean connect() {
 		ByteBuffer buffer = ByteBuffer.allocate(4);
 		try {
-			this.selector = Selector.open();
 			this.socketChannel = SocketChannel.open();
-			this.socketChannel.configureBlocking(false);
 			this.address = new InetSocketAddress(this.IP_Address, this.port);
-			this.socketChannel.connect(this.address);
-			while (!this.socketChannel.finishConnect());
+			if (!this.socketChannel.connect(this.address)) {
+				while (!this.socketChannel.finishConnect());
+			}
 			this.sender.appendTCP("Set up TCP connection\n");
-			this.socketChannel.register(selector, SelectionKey.OP_READ);
-			buffer.clear();
-			buffer.putInt((this.fileSize / (Parameters.BUFFER_SIZE) + 1));
-			buffer.flip();
-			this.socketChannel.write(buffer);
-			selector.select();
-			buffer.clear();
-			socketChannel.read(buffer);
 		} catch (IOException e) {
 			sender.appendTCP("IOException: failed to create SocketChannel\n");
 			return false;

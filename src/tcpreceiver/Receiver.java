@@ -44,7 +44,7 @@ public class Receiver extends JFrame implements ActionListener {
 	private JFileChooser fc = null;
 	
 	public Receiver(String host, int port) {
-		super("Receive File");
+		super("Receive File ##########");
 		this.portNo = port;
 		/* TODO:figure out here how to get my IP */
 		this.hostAddress = host;

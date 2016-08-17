@@ -85,14 +85,6 @@ public class ReceiverReconstructor implements Runnable {
 					serverSocketChannel = null;
 					serverSocketChannel = (ServerSocketChannel)key.channel();
 
-					sChannel = null;
-					sChannel = serverSocketChannel.accept();
-					sChannel.configureBlocking(false);
-					sChannel.register(selector, SelectionKey.OP_READ);
-					
-					this.receiver.appendTCP("New TCP connection from " + sChannel.toString() + "\n");
-
-				
 					try {
 						this.filePath = (String)JOptionPane.showInputDialog(
 							receiver,
@@ -104,12 +96,19 @@ public class ReceiverReconstructor implements Runnable {
                     	e.printStackTrace();
                     }
 
-					//If a string was returned, say so.
 					if ((this.filePath != null) && (this.filePath.length() > 0)) {
+						this.receiver.appendTCP("File to be saved as " + filePath + "\n");
 					} else {
 						this.filePath = "myFile";
 					}
 
+					sChannel = null;
+					sChannel = serverSocketChannel.accept();
+					sChannel.configureBlocking(false);
+					sChannel.register(selector, SelectionKey.OP_READ);
+					this.receiver.appendTCP("New TCP connection from " + sChannel.toString() + "\n");
+
+					/*
 					try {
 						Thread.sleep(400);
 					} catch (Exception e) {
@@ -134,8 +133,7 @@ public class ReceiverReconstructor implements Runnable {
 						sChannel.write(buffer);
 						buffer.clear();
 					}
-
-
+					*/
 
 					this.startTime = System.currentTimeMillis();
 
@@ -154,7 +152,15 @@ public class ReceiverReconstructor implements Runnable {
 						this.receiver.appendTCP(tcpmessage);
 						System.out.printf("%s", tcpmessage);
 						sChannel.close();
+
+						this.endTime = System.currentTimeMillis();
+						double time = ((this.endTime - this.startTime) / 100 + 0.1) / 10;
+						receiver.appendTCP("Time taken in seconds: " + time + "\n");
+						System.out.println("Time taken in seconds: " + time);
+
+						/*
 						System.exit(1);
+						*/
 					} else {
 						buffer.flip();
 						try {
@@ -164,15 +170,12 @@ public class ReceiverReconstructor implements Runnable {
 						}
 					}
 
+					/*
 					double percentage = ((((10000L * (1 + currentRead)) / this.expectedReads) + 0.0) / 100);
 
 					this.receiver.appendTCP("" + percentage + "%\n");
-					if (percentage >= 99.99) {
-						this.endTime = System.currentTimeMillis();
-						double time = ((this.endTime - this.startTime) / 100 + 0.1) / 10;
-						receiver.appendTCP("Time taken in seconds: " + time + "\n");
-						System.out.println("Time taken in seconds: " + time);
-					}
+					*/
+
 					currentRead++;
 					it.remove();
 				}
