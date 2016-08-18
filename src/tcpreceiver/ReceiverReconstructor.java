@@ -25,6 +25,7 @@ public class ReceiverReconstructor implements Runnable {
 	private long endTime = -1;
 	private int expectedReads = -1;
 	private int currentRead = 0;
+	private long fPosition = -1;
 
 	public ReceiverReconstructor(Receiver receiver, int port) {
 		InetSocketAddress address = null;
@@ -33,6 +34,7 @@ public class ReceiverReconstructor implements Runnable {
 		this.currentRead = 0;
 		int i;
 
+		this.fPosition = 0;
 		this.receiver = receiver;
 		this.port = port;
 		try {
@@ -108,33 +110,6 @@ public class ReceiverReconstructor implements Runnable {
 					sChannel.register(selector, SelectionKey.OP_READ);
 					this.receiver.appendTCP("New TCP connection from " + sChannel.toString() + "\n");
 
-					/*
-					try {
-						Thread.sleep(400);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-
-					buffer.clear();
-					int r = sChannel.read(buffer);
-					System.out.printf("Read %d bytes\n", r);
-	
-					if (r == -1) {
-						System.out.printf("Connection broke down\n");
-						System.exit(1);
-					}
-					else {
-						buffer.flip();
-						this.expectedReads = buffer.getInt();
-						String tcpmessage = "" + expectedReads + " packets expected\n";
-						this.receiver.appendTCP(tcpmessage);
-						System.out.printf("%s", tcpmessage);
-						buffer.rewind();
-						sChannel.write(buffer);
-						buffer.clear();
-					}
-					*/
-
 					this.startTime = System.currentTimeMillis();
 
 					FileOutputStream fout = new FileOutputStream(this.filePath);
@@ -143,8 +118,21 @@ public class ReceiverReconstructor implements Runnable {
 				} else if ((key.readyOps() & SelectionKey.OP_READ)
 						== SelectionKey.OP_READ) {
 
-					System.out.printf("mewp %d\n", currentRead);
+					System.out.println("mewp %ld" + fPosition);
+
 					sChannel = (SocketChannel)key.channel();
+					long readCount = fcout.transferFrom(sChannel, fPosition, Integer.MAX_VALUE); 
+					if (readCount == 0) {
+						this.endTime = System.currentTimeMillis();
+						double time = ((this.endTime - this.startTime) / 100 + 0.1) / 10;
+						receiver.appendTCP("Time taken in seconds: " + time + "\n");
+						System.out.println("Time taken in seconds: " + time);
+						sChannel.close();
+					} else {
+						fPosition += readCount;
+					}
+
+					/*
 					buffer.clear();
 					int r = sChannel.read(buffer);
 					if (r == -1) {
@@ -158,9 +146,6 @@ public class ReceiverReconstructor implements Runnable {
 						receiver.appendTCP("Time taken in seconds: " + time + "\n");
 						System.out.println("Time taken in seconds: " + time);
 
-						/*
-						System.exit(1);
-						*/
 					} else {
 						buffer.flip();
 						try {
@@ -169,6 +154,7 @@ public class ReceiverReconstructor implements Runnable {
 							e.printStackTrace();
 						}
 					}
+					*/
 
 					/*
 					double percentage = ((((10000L * (1 + currentRead)) / this.expectedReads) + 0.0) / 100);

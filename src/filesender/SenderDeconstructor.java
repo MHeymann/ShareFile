@@ -119,12 +119,16 @@ public class SenderDeconstructor implements Runnable {
 			this.datagramChannel = DatagramChannel.open();
 			this.socketChannel = SocketChannel.open();
 			this.socketChannel.configureBlocking(false);
+			/*
 			this.datagramChannel.configureBlocking(false);
+			*/
 			this.address = new InetSocketAddress(this.IP_Address, this.port);
 			this.socketChannel.connect(this.address);
 			while (!this.socketChannel.finishConnect());
 			this.sender.appendTCP("Set up TCP connection\n");
+			/*
 			this.datagramChannel.register(selector, SelectionKey.OP_READ);
+			*/
 			this.socketChannel.register(selector, SelectionKey.OP_READ);
 			buffer.clear();
 			buffer.putInt((this.fileSize / (Parameters.DATA_BYTES) + 1));

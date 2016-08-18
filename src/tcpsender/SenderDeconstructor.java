@@ -16,7 +16,6 @@ public class SenderDeconstructor implements Runnable {
 	private Sender sender = null;
 	private int port = -1;
 	private SocketChannel socketChannel = null;
-	private DatagramChannel datagramChannel = null;
 	private InetSocketAddress address = null;
 	private HashMap<Integer, Packet> hMap = null;
 
@@ -28,7 +27,6 @@ public class SenderDeconstructor implements Runnable {
 		this.sender = sender;
 		this.port = port;
 		this.socketChannel = null;
-		this.datagramChannel = null;
 		this.hMap = null;;
 	}
 
@@ -37,19 +35,41 @@ public class SenderDeconstructor implements Runnable {
 	}
 
 	public void go() {
-		ByteBuffer buffer = ByteBuffer.allocate(Parameters.BUFFER_SIZE);
 		FileInputStream fin;
 		FileChannel fcin;
 		int r = 0, r2 = 0;
 		int i;
 		
-		try{
+		try {
 			fin = new FileInputStream(this.fileLocation);	
 			fcin = fin.getChannel();
 		}
 		catch (FileNotFoundException e){
 			return;
 		}
+
+		try {
+			fcin.transferTo(0, this.fileSize, this.socketChannel);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		/*
+		this.incrementalSend(fcin);
+		 */
+		
+		try {
+			fin.close();
+			this.socketChannel.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.printf("Done sending file\n");
+	}
+
+	public void incrementalSend(FileChannel fcin) {
+		int i, r = -1;
+		ByteBuffer buffer = ByteBuffer.allocate(Parameters.BUFFER_SIZE);
 
 		i = 0;
 		while(true) {
@@ -75,14 +95,7 @@ public class SenderDeconstructor implements Runnable {
 
 			i++;
 		}
-		
-		try {
-			fin.close();
-			this.socketChannel.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		System.out.printf("Done sending file\n");
+
 	}
 
 	public boolean connect() {
